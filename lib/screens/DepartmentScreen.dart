@@ -4,6 +4,7 @@ import 'package:project_flutter/%20screens/statistiques_screen.dart';
 import '../ services/department_service.dart';
 
 import '../models/department.dart';
+import 'EmployeeListPage .dart';
 import 'ProjetScreen..dart';
 import 'ProjetsListScreen.dart';
 import 'home_screen.dart';
@@ -396,14 +397,7 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
           ),
         ),
 
-        actions: [
-          IconButton(
-            icon: Icon(Icons.menu), // Icône du sidebar
-            onPressed: () {
-              Scaffold.of(context).openDrawer(); // Ouvrir le Drawer pour la navigation
-            },
-          ),
-        ],
+
       ),
       drawer: Drawer(
         child: ListView(
@@ -466,6 +460,10 @@ class _DepartmentScreenState extends State<DepartmentScreen> {
               leading: Icon(Icons.person, color: Colors.blueAccent),
               title: Text('Employee'),
               onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => EmployeeListPage()),
+                );
                 // Ajouter ici la logique pour accéder à la page des employés
               },
             ),

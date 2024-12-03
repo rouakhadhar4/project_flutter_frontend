@@ -6,6 +6,16 @@ import '../models/Projet.dart';
 
 class ProjetService {
   static const String baseUrl = 'http://10.0.2.2:8045/api/projets';
+  Future<List<Projet>> getProjets() async {
+    final response = await http.get(Uri.parse(baseUrl));
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Projet.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load projects');
+    }
+  }
   Future<List<Department>> getDepartements() async {
     try {
       // Utilisation de l'URL correcte

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import '../ services/EmployeeService.dart';
 import '../ services/ProjetService.dart';
 import '../ services/auth_service.dart';
 import '../ services/department_service.dart';
+
 import 'DepartmentScreen.dart';
+
+import 'EmployeeListPage .dart';
 import 'ProjetsListScreen.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
-
 
 class StatistiquesScreen extends StatefulWidget {
   @override
@@ -17,6 +20,7 @@ class _StatistiquesScreenState extends State<StatistiquesScreen> {
   int _userCount = 0;
   int _departmentCount = 0;
   int _projectCount = 0;
+  int _employeeCount = 0; // Ajout du comptage des employés
   bool _isLoading = true;
 
   @override
@@ -31,11 +35,13 @@ class _StatistiquesScreenState extends State<StatistiquesScreen> {
       final userCount = await AuthService().getUserCount();
       final departmentCount = await DepartmentService().fetchDepartments();
       final projectCount = await ProjetService().getAllProjets();
+      final employeeCount = await EmployeeService().getAllEmployees(); // Récupère le nombre d'employés
 
       setState(() {
         _userCount = userCount;
         _departmentCount = departmentCount.length;
         _projectCount = projectCount.length;
+        _employeeCount = employeeCount.length; // Met à jour le nombre d'employés
         _isLoading = false;
       });
     } catch (e) {
@@ -52,8 +58,22 @@ class _StatistiquesScreenState extends State<StatistiquesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Statistiques'),
-        backgroundColor: Colors.blueAccent,
+        title: Text(
+          'Statistiques',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: 1.2,
+            shadows: [
+              Shadow(
+                offset: Offset(2.0, 2.0),
+                blurRadius: 5.0,
+                color: Colors.black.withOpacity(0.5),
+              ),
+            ],
+          ),
+        ),
       ),
       drawer: Drawer(
         child: ListView(
@@ -63,7 +83,6 @@ class _StatistiquesScreenState extends State<StatistiquesScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Colors.blueAccent, Colors.lightBlue],
-                  // Dégradé de couleurs
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -74,7 +93,7 @@ class _StatistiquesScreenState extends State<StatistiquesScreen> {
                   Icon(Icons.home, size: 60, color: Colors.white),
                   SizedBox(height: 10),
                   Text(
-                    ' Welcome to InnovaTech Solutions',
+                    'Welcome to InnovaTech Solutions',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -122,7 +141,10 @@ class _StatistiquesScreenState extends State<StatistiquesScreen> {
               leading: Icon(Icons.person, color: Colors.blueAccent),
               title: Text('Employee'),
               onTap: () {
-                // Ajouter ici la logique pour accéder à la page des employés
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => EmployeeListPage()),
+                );
               },
             ),
             // Statistiques
@@ -153,7 +175,7 @@ class _StatistiquesScreenState extends State<StatistiquesScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: _isLoading
-            ? Center(child: CircularProgressIndicator()) // Indicateur de chargement
+            ? Center(child: CircularProgressIndicator())
             : Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -177,6 +199,13 @@ class _StatistiquesScreenState extends State<StatistiquesScreen> {
               icon: Icons.work,
               color: Colors.orange,
             ),
+            SizedBox(height: 20),
+            _buildStatCard( // Carte pour les employés
+              title: 'Employés',
+              count: _employeeCount,
+              icon: Icons.person_add,
+              color: Colors.purple, // Choisir une couleur
+            ),
           ],
         ),
       ),
@@ -198,7 +227,6 @@ class _StatistiquesScreenState extends State<StatistiquesScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Icône avec une couleur de fond circulaire
             Container(
               decoration: BoxDecoration(
                 color: color.withOpacity(0.2),
@@ -208,7 +236,6 @@ class _StatistiquesScreenState extends State<StatistiquesScreen> {
               child: Icon(icon, size: 30, color: color),
             ),
             SizedBox(width: 20),
-            // Texte et statistiques
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

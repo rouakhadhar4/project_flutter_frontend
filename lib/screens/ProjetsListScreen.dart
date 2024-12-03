@@ -1,13 +1,16 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:project_flutter/%20screens/statistiques_screen.dart';
-import '../ services/ProjetService.dart';
 
+import '../ services/ProjetService.dart';
 import '../ services/department_service.dart';
+
 import '../models/Projet.dart';
 import '../models/department.dart';
 import 'AddProjetPage.dart';
 import 'DepartmentScreen.dart';
 
+import 'EmployeeListPage .dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
 
@@ -19,7 +22,7 @@ class ProjetsListScreen extends StatefulWidget {
 class _ProjetsListScreenState extends State<ProjetsListScreen> {
   late Future<List<Department>> departements;
   List<Projet> filteredProjets = [];
-  int? selectedDepartementId;
+  DateTime? selectedDate;
 
   @override
   void initState() {
@@ -35,19 +38,22 @@ class _ProjetsListScreenState extends State<ProjetsListScreen> {
     });
   }
 
-  void filterProjetsByDepartement(int? departementId) async {
+  void filterProjetsByDate(DateTime? date) async {
     List<Projet> allProjets = await ProjetService().getAllProjets();
     setState(() {
-      if (departementId == null) {
+      if (date == null) {
         filteredProjets = allProjets;
       } else {
         filteredProjets = allProjets
-            .where((projet) => projet.departement?.id == departementId)
+            .where((projet) {
+          DateTime projetDate = DateTime.parse(projet.dateDebut ?? '');
+          return projetDate.isBefore(date) || projetDate.isAtSameMomentAs(date);
+        })
             .toList();
 
         if (filteredProjets.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Aucun projet trouvé pour ce département'),
+            content: Text('Aucun projet trouvé pour cette date'),
           ));
         }
       }
@@ -66,7 +72,7 @@ class _ProjetsListScreenState extends State<ProjetsListScreen> {
   Future<void> deleteProjet(int id) async {
     try {
       await ProjetService().deleteProjet(id);
-      filterProjetsByDepartement(selectedDepartementId);
+      loadAllProjets();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Erreur de suppression: $e'),
@@ -79,7 +85,7 @@ class _ProjetsListScreenState extends State<ProjetsListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Départements',
+          'Projets',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -94,14 +100,6 @@ class _ProjetsListScreenState extends State<ProjetsListScreen> {
             ],
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.menu),
-            onPressed: () {
-              Scaffold.of(context).openDrawer();
-            },
-          ),
-        ],
       ),
       drawer: Drawer(
         child: ListView(
@@ -137,7 +135,6 @@ class _ProjetsListScreenState extends State<ProjetsListScreen> {
                 );
               },
             ),
-            // Département
             ListTile(
               leading: Icon(Icons.business, color: Colors.blueAccent),
               title: Text('Département'),
@@ -148,7 +145,6 @@ class _ProjetsListScreenState extends State<ProjetsListScreen> {
                 );
               },
             ),
-            // Projets
             ListTile(
               leading: Icon(Icons.assignment, color: Colors.blueAccent),
               title: Text('Projets'),
@@ -159,15 +155,16 @@ class _ProjetsListScreenState extends State<ProjetsListScreen> {
                 );
               },
             ),
-            // Employés
             ListTile(
               leading: Icon(Icons.person, color: Colors.blueAccent),
               title: Text('Employee'),
               onTap: () {
-                // Ajouter ici la logique pour accéder à la page des employés
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => EmployeeListPage()),
+                );
               },
             ),
-            // Statistiques
             ListTile(
               leading: Icon(Icons.bar_chart, color: Colors.blueAccent),
               title: Text('Statistiques'),
@@ -178,7 +175,6 @@ class _ProjetsListScreenState extends State<ProjetsListScreen> {
                 );
               },
             ),
-            // Déconnexion
             ListTile(
               leading: Icon(Icons.logout, color: Colors.blueAccent),
               title: Text('Se déconnecter'),
@@ -194,42 +190,31 @@ class _ProjetsListScreenState extends State<ProjetsListScreen> {
       ),
       body: Column(
         children: [
-          FutureBuilder<List<Department>>(
-            future: departements,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
-              }
-              if (snapshot.hasError) {
-                return Text('Erreur de chargement des départements');
-              }
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Text('Aucun département disponible');
-              }
-
-              List<Department> departementList = snapshot.data!;
-              return DropdownButton<int>(
-                value: selectedDepartementId,
-                hint: Text('Sélectionnez un département'),
-                items: departementList
-                    .map((departement) => departement.id)
-                    .toSet()
-                    .map((departementId) {
-                  return DropdownMenuItem<int>(
-                    value: departementId,
-                    child: Text(departementList
-                        .firstWhere((e) => e.id == departementId)
-                        .nom),
-                  );
-                }).toList(),
-                onChanged: (int? value) {
-                  setState(() {
-                    selectedDepartementId = value;
-                  });
-                  filterProjetsByDepartement(value);
-                },
-              );
-            },
+          // Filtre par date
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Text('Filtrer par Date:'),
+                IconButton(
+                  icon: Icon(Icons.calendar_today),
+                  onPressed: () async {
+                    DateTime? selected = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2101),
+                    );
+                    if (selected != null) {
+                      setState(() {
+                        selectedDate = selected;
+                      });
+                      filterProjetsByDate(selected);
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: ListView.builder(
@@ -274,41 +259,35 @@ class _ProjetsListScreenState extends State<ProjetsListScreen> {
                           style: TextStyle(fontSize: 16),
                         ),
                         SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      int? id = int.tryParse(projet.id ?? '');
-                      if (id != null) {
-                        deleteProjet(id);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('ID invalide'),
-                        ));
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red, // Couleur de fond rouge
-                      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Espacement du bouton
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0), // Bords arrondis
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min, // Minimise la taille du Row
-                      children: [
-                        Icon(
-                          Icons.delete, // Icône de suppression
-                          color: Colors.white, // Couleur de l'icône
-                        ),
-                        SizedBox(width: 8), // Espacement entre l'icône et le texte
-                        Text(
-                          'Supprimer', // Texte du bouton
-                          style: TextStyle(color: Colors.white), // Texte en blanc
+                        ElevatedButton(
+                          onPressed: () {
+                            int? id = int.tryParse(projet.id ?? '');
+                            if (id != null) {
+                              deleteProjet(id);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text('ID invalide'),
+                              ));
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.delete, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text('Supprimer', style: TextStyle(color: Colors.white)),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-]
-                ),
                   ),
                 );
               },

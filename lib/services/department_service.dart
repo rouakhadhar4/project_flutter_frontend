@@ -5,6 +5,16 @@ import '../models/department.dart';
 class DepartmentService {
   static const String apiUrl = 'http://10.0.2.2:8045/api/departements';
 
+  Future<List<Department>> getDepartments() async {
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Department.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load departments');
+    }
+  }
   // Récupérer la liste des départements
   Future<List<Department>> fetchDepartments() async {
     try {

@@ -84,4 +84,6 @@ class AuthService {
       throw Exception('Erreur d\'enregistrement: $e');
     }
   }
+
+
 }

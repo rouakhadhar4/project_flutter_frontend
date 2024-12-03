@@ -5,8 +5,13 @@ import 'package:project_flutter/%20screens/statistiques_screen.dart';
 import '../ services/PreferencesService.dart';
 
 import 'DepartmentScreen.dart';
+import 'EmployeeListPage .dart';
 import 'ProjetsListScreen.dart';
+import 'employee_detail_screen.dart';
 import 'login_screen.dart';
+import 'package:flutter/material.dart';
+
+
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -35,8 +40,23 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Page d\'accueil'),
-        backgroundColor: Colors.blueAccent,
+        title: Text(
+          ('Page d\'accueil'),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: 1.2,
+            shadows: [
+              Shadow(
+                offset: Offset(2.0, 2.0),
+                blurRadius: 5.0,
+                color: Colors.black.withOpacity(0.5),
+              ),
+            ],
+          ),
+        ),
+
       ),
       // Ajout de la barre latérale (Drawer)
       drawer: Drawer(
@@ -105,6 +125,10 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: Icon(Icons.person, color: Colors.blueAccent),
               title: Text('Employee'),
               onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => EmployeeListPage()),
+                );
                 // Ajouter ici la logique pour accéder à la page des employés
               },
             ),
